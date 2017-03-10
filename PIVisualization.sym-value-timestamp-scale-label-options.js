@@ -18,7 +18,7 @@
 (function (PV) {
     'use strict';
 
-    PV.SymValueLabelOptions = (function() {
+    PV.SymValueTSScaleLabelOptions = (function() {
         var NameTypes = Object.freeze({
             Custom: 'C',
             Description: 'D',
@@ -34,7 +34,8 @@
                 CustomName: '',
                 ShowLabel: true,
                 ShowValue: true,
-                ShowUOM: true
+                ShowUOM: true,
+                redTimeMinsAgo: 5,
             }, config);
         };
 
@@ -99,13 +100,13 @@
     }());
     
     angular.module(APPNAME)
-        .service('symValueLabelOptions', SymValueLabelOptions);
+        .service('SymValueTSScaleLabelOptions', SymValueTSScaleLabelOptions);
 
-    function SymValueLabelOptions() {
+    function SymValueTSScaleLabelOptions() {
         var service = this;
-        service.NameTypes = PV.SymValueLabelOptions.NameTypes;
-        service.getLabelFromType = PV.SymValueLabelOptions.getLabelFromType;
-        service.init = PV.SymValueLabelOptions.init;
-        service.dataUpdate = PV.SymValueLabelOptions.dataUpdate;
+        service.NameTypes = PV.SymValueTSScaleLabelOptions.NameTypes;
+        service.getLabelFromType = PV.SymValueTSScaleLabelOptions.getLabelFromType;
+        service.init = PV.SymValueTSScaleLabelOptions.init;
+        service.dataUpdate = PV.SymValueTSScaleLabelOptions.dataUpdate;
     }
 })(window.PIVisualization);

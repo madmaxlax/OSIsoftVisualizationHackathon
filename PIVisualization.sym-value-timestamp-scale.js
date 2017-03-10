@@ -19,21 +19,22 @@ window.PIVisualization = window.PIVisualization || {};
 window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings || {};
 
 (function (PV) {
-    'use strict';    
+    'use strict';
     function valTimestampScale() { }
     PV.deriveVisualizationFromBase(valTimestampScale);
 
-    valTimestampScale.prototype.init = function (scope, elem, symValueLabelOptions) {
+    valTimestampScale.prototype.init = function (scope, elem, SymValueTSScaleLabelOptions) {
         this.onResize = resize;
         this.onConfigChange = configChange;
         this.onDataUpdate = dataUpdate;
         var that = this;
 
-        scope.symTime = '...';
+        scope.symTime = 'Loading...';
+        scope.symTimeColor = 'rgba(255,255,255,0)';
         scope.symValue = '...';
         scope.valueMetaData = { Units: '' };
 
-        symValueLabelOptions.init(scope);
+        SymValueTSScaleLabelOptions.init(scope);
 
         var fontMetrics = scope.def.fontMetrics;
         var indicatorMultiplier = 0.75;
@@ -41,13 +42,13 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
         scope.differentialText = '...';
         scope.IndicatorFill = scope.config.Stroke;
         scope.targetText = '...';
-        
+
         scope.indicatorPosition = {
             left: undefined,
             width: undefined,
             points: '0,0 0,0 0,0',
             alternateStatePath: ''
-        };        
+        };
 
         var allLines = elem.find('.text-symbol-sizing-line');
         var shownLines;
@@ -57,16 +58,16 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
         var fontSizingObject = {};
 
         Object.defineProperty(fontSizingObject, 'diffWidth', {
-            get: function() {
+            get: function () {
                 return scope.config.ShowDifferential ? 1.1 * fontMetrics.charWidth * scope.indicatorFontSize / 12 * scope.differentialText.toString().length : 0;
             }
         });
 
         Object.defineProperty(fontSizingObject, 'targetWidth', {
-            get: function() {
+            get: function () {
                 return scope.config.ShowTarget ? 1.1 * fontMetrics.charWidth * scope.indicatorFontSize / 12 * scope.targetText.toString().length : 0;
             }
-        });        
+        });
 
         function setupResizingLines() {
             shownLines = [];
@@ -81,14 +82,63 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
         }
 
         setupResizingLines();
-        
+
         scope.runtimeData.onDisplayNameChanged = function () {
             resize();
         };
 
+        function calculateColorBasedOnStaleness(time, config) {
+            // console.log(time);
+            //set a default for the minutes ago, sometimes config is null
+            var redTimeMinutesAgo = 5;
+            if(config && config.redTimeMinsAgo){
+                redTimeMinutesAgo = config.redTimeMinsAgo;
+            }
+            //for now, recent value is just current time
+            //TODO configurable (ie: green if within 5 mins)
+            var newValTime = Date.now();
+            //uses config value for minutes ago
+            //where a value is considered stale
+            var oldValTime = Date.now() - (1000*60*redTimeMinutesAgo);//1day 86400000;
+            var time = Date.parse(time);
+            console.log('Value is '+(Date.now()-time)/1000 + ' Seconds ago');
+            var scale = 0;
+            if(time >= newValTime)
+            {
+                scale = 0;
+            }
+            if (time <= oldValTime){
+                scale = 1;
+            }
+            else{
+                scale = 1- ((time-oldValTime)/(newValTime-oldValTime));
+            }
+
+            var red = 0;
+            var green = 1;
+            var blue = 0.0;
+            if(scale <= .5){
+                red = 2*scale;
+            }
+            else {
+                red = 1.0;
+                green = 1.0 - 2 * (scale*0.5);
+            }
+            // if 0<=power<0.5:        #first, green stays at 100%, red raises to 100%
+            //     green = 1.0
+            //     red = 2 * power
+            // if 0.5<=power<=1:       #then red stays at 100%, green decays
+            //     red = 1.0
+            //     green = 1.0 - 2 * (power-0.5)
+            var returnval = 'rgba('+parseInt(red*255)+','+parseInt(green*255)+',0,1)';
+            return returnval;
+        }
+
         function dataUpdate(data) {
             var valueLabel = scope.runtimeData.valueLabel;
-
+            if (data && data.Time) {
+            scope.symTimeColor = calculateColorBasedOnStaleness(data.Time, this.scope.config);
+            }
             if (data && (scope.symTime !== data.Time ||
 
                 scope.symValue !== data.Value ||
@@ -96,14 +146,15 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                 (data.Label && valueLabel.label !== data.Label) ||
                 (data.Path && valueLabel.path !== data.Path.slice(3)) ||
                 (data.TargetData && data.TargetData.Target !== scope.target)
-                )) {
+            )) {
 
                 scope.symTime = data.Time;
                 scope.symValue = data.Value;
+                scope.symTimeColor = calculateColorBasedOnStaleness(data.Time);
 
                 // Metadata received on first update, periodically afterward
                 if (data.Label) {
-                    symValueLabelOptions.dataUpdate(scope, data);
+                    SymValueTSScaleLabelOptions.dataUpdate(scope, data);
                     scope.valueMetaData = { Path: PV.Utils.parseTooltip(data.Path), Units: data.Units || '' };
                 }
 
@@ -125,10 +176,10 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                         direction = data.TargetData.TargetDirection;
                     }
 
-                    if(data.TargetData.TargetDiffValue) {
+                    if (data.TargetData.TargetDiffValue) {
                         diffValue = data.TargetData.TargetDiffValue;
-                        }
-                        
+                    }
+
                     if (data.TargetData.TargetDiffPercent) {
                         diffPercent = data.TargetData.TargetDiffPercent;
                     }
@@ -136,7 +187,7 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                     scope.diffValue = diffValue;
                     scope.diffPercent = diffPercent;
                 }
-                
+
                 scope.tooltip = PV.Utils.generateTooltip(scope);
 
                 resize();
@@ -152,12 +203,12 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
 
         function resize() {
             setupResizingLines();
-            adjustFontWidthForIndicator();            
-            that.autoSizeWidth(shownLines);            
+            adjustFontWidthForIndicator();
+            that.autoSizeWidth(shownLines);
         }
 
         if (that.onAutoResizeComplete) {
-            var currentFunction = that.onAutoResizeComplete;            
+            var currentFunction = that.onAutoResizeComplete;
             that.onAutoResizeComplete = function () {
                 currentFunction();
                 updateIndicator();
@@ -167,7 +218,7 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
             that.onAutoResizeComplete = updateIndicator;
         }
 
-        function adjustFontWidthForIndicator() {            
+        function adjustFontWidthForIndicator() {
 
             if (!scope.config.ShowLabel && !scope.config.ShowTime && !scope.config.ShowValue) {
                 indicatorFontMultiplier = 1;
@@ -210,11 +261,11 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
             }
             scope.indicatorFontSize = 12 * fontHeight / (1.35 * fontMetrics.charHeight);
 
-            scope.widthAdjustment = scope.config.ShowIndicator ? (Math.max(height +(fontSizingObject.diffWidth), (fontSizingObject.targetWidth))) : 0;
+            scope.widthAdjustment = scope.config.ShowIndicator ? (Math.max(height + (fontSizingObject.diffWidth), (fontSizingObject.targetWidth))) : 0;
         }
 
-        function updateIndicator() {            
-            if (scope.position.width && scope.config.ShowIndicator) {                                
+        function updateIndicator() {
+            if (scope.position.width && scope.config.ShowIndicator) {
                 var height;
 
                 if (shownLines.length) {
@@ -225,7 +276,7 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                 } else {
                     height = scope.position.height;
                 }
-                
+
                 var top;
 
                 if (scope.config.ShowTarget) {
@@ -233,12 +284,12 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                         height = scope.position.height / 2;
                     }
                     top = scope.position.height / 4 - scope.indicatorPosition.height / 2;
-                    
+
                 }
                 else {
                     top = scope.position.height / 2 - scope.indicatorPosition.height / 2;
                 }
-                
+
                 top = top < 0 ? 0 : top;
 
                 scope.indicatorPosition = {
@@ -246,7 +297,7 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                     height: height,
                     top: top
                 };
-                
+
                 var leftStart = scope.position.width - scope.widthAdjustment;
                 var topGreaterThanBottom = false;
                 if (scope.indicatorPosition.width + fontSizingObject.diffWidth >= fontSizingObject.targetWidth) {
@@ -262,8 +313,8 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                 }
                 else {
                     scope.indicatorPosition.left = scope.position.width - scope.widthAdjustment / 2 - scope.indicatorPosition.width / 2;
-                }                
-                
+                }
+
                 generateIndicatorPoints(direction);
 
                 if (direction) {
@@ -277,24 +328,24 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                         scope.IndicatorFill = scope.config.IndicatorFillNeutral;
                     }
                 }
-                                
+
                 if (scope.config.ShowDifferential && scope.position.width > 0) {
                     if (shownLines.length) {
                         height = $(shownLines[0]).height() * indicatorFontMultiplier;
                     } else {
                         height = scope.position.height * indicatorMultiplier;
                     }
-                    
+
                     if (scope.config.ShowTarget) {
-                        if (height > scope.position.height * indicatorFontMultiplier/ 2) {
-                            height = scope.position.height * indicatorFontMultiplier/ 2;
-                        }                
+                        if (height > scope.position.height * indicatorFontMultiplier / 2) {
+                            height = scope.position.height * indicatorFontMultiplier / 2;
+                        }
                     }
 
                     scope.differentialPosition = {
                         width: fontSizingObject.diffWidth,
                         height: height
-                        
+
                     };
                     scope.differentialPosition.top = scope.indicatorPosition.top + scope.indicatorPosition.height / 2 - scope.differentialPosition.height / 2;
                     scope.differentialPosition.top = scope.differentialPosition.top < 0 ? 0 : scope.differentialPosition.top;
@@ -304,7 +355,7 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                     } else {
                         scope.differentialPosition.left = scope.position.width - scope.widthAdjustment * 0.25 - scope.differentialPosition.width / 2;
                     }
-                    
+
                     if (scope.differentialPosition.left + scope.differentialPosition.width > scope.position.width) {
                         scope.differentialPosition.left = scope.position.width - scope.differentialPosition.width;
                     }
@@ -331,14 +382,14 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                     if (topGreaterThanBottom) {
                         scope.targetPosition.left = scope.position.width - scope.widthAdjustment / 2 - scope.targetPosition.width / 2;
                     }
-                    
+
                     if (shownLines.length) {
                         var shownLinesHeight = $(elem.find('.value-symbol-portion-text')).height();
                         if (scope.targetPosition.top + scope.targetPosition.height > shownLinesHeight) {
                             scope.targetPosition.top = shownLinesHeight - scope.targetPosition.height;
 
                         }
-                    }                    
+                    }
                 }
             }
         }
@@ -398,12 +449,12 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
 
     var def = {
         typeName: 'valuetimestampscale',
-        displayName: PV.ResourceStrings.ValueSymbol,
+        displayName: "Value TimeStamp Scale",
         datasourceBehavior: PV.Extensibility.Enums.DatasourceBehaviors.Single,
-        iconUrl: 'Images/chrome.value.svg',
+        iconUrl: 'Scripts/app/editor/symbols/ext/value-timestamp-scale.png',
         getDefaultConfig: function () {
-            var config = PV.SymValueLabelOptions.getDefaultConfig({
-                DataShape: 'Value TS Scale',
+            var config = PV.SymValueTSScaleLabelOptions.getDefaultConfig({
+                DataShape: 'Value', // can only be Value, Gauge, Trend, Table, TimeSeries
                 Height: 60,
                 Fill: 'rgba(255,255,255,0)',
                 Stroke: 'rgba(119,136,153,1)',
@@ -413,7 +464,7 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
                 IndicatorFillDown: 'white',
                 IndicatorFillNeutral: 'gray',
                 ShowDifferential: true,
-                DifferentialType: 'percent',                
+                DifferentialType: 'percent',
                 ShowIndicator: false,
                 ShowValue: true,
                 ShowTarget: true
@@ -428,13 +479,13 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
             }
         },
         loadConfig: loadConfig,
-        templateUrl: 'scripts/app/editor/symbols/sym-value-timestamp-scale-template.html',
+        templateUrl: 'scripts/app/editor/symbols/ext/sym-value-timestamp-scale-template.html',
         resizerMode: 'AutoWidth',
         StateVariables: ['Fill', 'Blink'],
-        inject: ['symValueLabelOptions'],
+        inject: ['SymValueTSScaleLabelOptions'],
         visObjectType: valTimestampScale,
-        configTemplateUrl: 'scripts/app/editor/symbols/sym-value-timestamp-scale-config.html',
-        configTitle: PV.ResourceStrings.FormatValueOption,        
+        configTemplateUrl: 'scripts/app/editor/symbols/ext/sym-value-timestamp-scale-config.html',
+        configTitle: PV.ResourceStrings.FormatValueOption,
         formatMap: { BackgroundColor: 'Fill', TextColor: 'Stroke', ValueColor: 'ValueStroke' },
         supportsCollections: true
     };

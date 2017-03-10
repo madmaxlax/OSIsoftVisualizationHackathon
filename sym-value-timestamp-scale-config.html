@@ -13,6 +13,15 @@
 </div>
 <div class="config-option-format"><pv-color-picker id="value-stroke" ng-model="config.ValueStroke"></pv-color-picker></div>
 
+<!--Timestamp scale-->
+<div class="c-side-pane t-toolbar">
+    <span class="config-section-header">Timestamp Scale</span>
+</div>
+<div class="config-option-format">"Green" Time: Date.now()</div>
+<div class="config-option-format">"Red" Time: <input type="number" maxlength="3" ng-model="config.redTimeMinsAgo"> minutes ago</div>
+
+
+
 <div class="c-side-pane t-toolbar">
     <span class="config-section-header">{{::res.ValueConfigTextVisibility}}</span>
 </div>
