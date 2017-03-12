@@ -101,7 +101,7 @@ window.PIVisualization.ClientSettings = window.PIVisualization.ClientSettings ||
             //where a value is considered stale
             var oldValTime = Date.now() - (1000*60*redTimeMinutesAgo);//1day 86400000;
             var time = Date.parse(time);
-            console.log('Value is '+(Date.now()-time)/1000 + ' Seconds ago');
+            //console.log('Value is '+(Date.now()-time)/1000 + ' Seconds ago');
             var scale = 0;
             if(time >= newValTime)
             {
