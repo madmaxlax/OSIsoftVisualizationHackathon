@@ -9,6 +9,12 @@
                 <span ng-style="{color:config.ValueStroke}" ng-bind="symValue"></span>
                 <span style="font-size:smaller;margin-left:1px;" ng-style="{color:config.Stroke}" ng-bind="valueMetaData.Units?'&nbsp;'+valueMetaData.Units:''" ng-show="config.ShowUOM"></span>
             </div>
+            
+            <br ng-if="config.ShowComparison" />
+            <div class="gauge-value-text" ng-style="{'width':position.width+'px',color:config.Stroke}" ng-show="config.ShowComparison">
+                <span>Comparison Value:</span> <span ng-style="{color:config.ValueStroke}" ng-bind="config.ComparisonValue"></span> %
+                <!--<span style="font-size:smaller;margin-left:1px;" ng-style="{color:config.Stroke}" ng-bind="valueMetaData.Units?'&nbsp;'+valueMetaData.Units:''" ng-show="config.ShowUOM"></span>-->
+            </div>
         </div>
     </div>
 
@@ -26,7 +32,35 @@
               ng-attr-stroke-width="{{0}}"
               ng-attr-width="{{outerRectangle.width}}">
         </rect>
-
+        <!--good range value-->
+        <rect ng-attr-x="{{goodRangeRectangle.x}}"
+              ng-attr-y="{{goodRangeRectangle.y}}"
+              fill="green"
+              ng-attr-height="{{goodRangeRectangle.height}}"
+              ng-attr-width="{{goodRangeRectangle.width}}">
+        </rect>
+        <!--warning range value-->
+        <rect ng-attr-x="{{warningRangeRectangle.x}}"
+              ng-attr-y="{{warningRangeRectangle.y}}"
+              fill="yellow"
+              ng-attr-height="{{warningRangeRectangle.height}}"
+              ng-attr-width="{{warningRangeRectangle.width}}">
+        </rect>
+        <!--Bad range value-->
+        <rect ng-attr-x="{{badRangeRectangle.x}}"
+              ng-attr-y="{{badRangeRectangle.y}}"
+              fill="red"
+              ng-attr-height="{{badRangeRectangle.height}}"
+              ng-attr-width="{{badRangeRectangle.width}}">
+        </rect>
+        <!--comparison value-->
+        <rect  ng-if="config.ShowComparisonValue" ng-attr-x="{{comparisonRectangle.x}}"
+            ng-attr-y="{{comparisonRectangle.y}}"
+            ng-attr-fill="{{IsGood !== false ? Fill || config.Fill : 'url(#diagonalHatch-'+symbol.Name+')'}}"
+            ng-attr-height="{{comparisonRectangle.height}}"
+            ng-attr-width="{{comparisonRectangle.width}}">
+        </rect>
+        <!--actual value-->
         <rect ng-attr-x="{{indicatorRectangle.x}}"
               ng-attr-y="{{indicatorRectangle.y}}"
               ng-attr-fill="{{IsGood !== false ? Fill || config.Fill : 'url(#diagonalHatch-'+symbol.Name+')'}}"

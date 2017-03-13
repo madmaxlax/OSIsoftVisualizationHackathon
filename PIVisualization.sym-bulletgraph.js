@@ -11,7 +11,7 @@ window.PIVisualization = window.PIVisualization || {};
     'use strict';
 
     function lGaugeVis() { }
-    PV.deriveVisualizationFromBase(lGaugeVis);    
+    PV.deriveVisualizationFromBase(lGaugeVis);
 
     lGaugeVis.prototype.init = function (scope, elem, symValueLabelOptions, dataPump) {
         this.onDataUpdate = dataUpdate;
@@ -24,7 +24,7 @@ window.PIVisualization = window.PIVisualization || {};
 
         symValueLabelOptions.init(scope);
 
-        var originalValueSize = fontMetrics.charHeight * 4;    // Absolute Size that value label will take up
+        var originalValueSize = fontMetrics.charHeight * 6;    // Absolute Size that value label will take up
         var minimumBarHeight = 20;
 
         var updateVisualization;
@@ -54,7 +54,7 @@ window.PIVisualization = window.PIVisualization || {};
         scope.fontSize = 15;
 
         scope.symValue = '...';
-        scope.valueMetaData = { units: ''};
+        scope.valueMetaData = { units: '' };
 
         Object.defineProperty(scope, 'availableGaugeHeight', {
             get: function () {
@@ -87,10 +87,10 @@ window.PIVisualization = window.PIVisualization || {};
                 scope.tooltip = PV.Utils.generateTooltip(scope);
 
                 var updateIndicatorOnly = !!scope.outerRectangle
-                            && data.ValueScalePositions.length === scalePositions.length
-                            && data.ValueScaleLabels.length === scaleLabels.length
-                            && data.ValueScalePositions.join(',') === scalePositions.join(',')
-                            && data.ValueScaleLabels.join(',') === scaleLabels.join(',');
+                    && data.ValueScalePositions.length === scalePositions.length
+                    && data.ValueScaleLabels.length === scaleLabels.length
+                    && data.ValueScalePositions.join(',') === scalePositions.join(',')
+                    && data.ValueScaleLabels.join(',') === scaleLabels.join(',');
 
                 scalePositions = data.ValueScalePositions;
                 scaleLabels = data.ValueScaleLabels;
@@ -104,12 +104,21 @@ window.PIVisualization = window.PIVisualization || {};
 
         function updateReset() {
             var gaugeHeight = originalGaugeHeight();
+            var labelCount = 0;
+            if(scope.config.ShowValue)
+                labelCount ++;
+            if(scope.config.ShowLabel)
+                labelCount ++;
+            if(scope.config.ShowComparisonLabel)
+                labelCount ++;
             if (gaugeHeight <= minimumBarHeight) {
                 scope.valueSize = 0;
-            } else if (!scope.config.ShowValue && !scope.config.ShowLabel) {
+            } else if (labelCount === 0) {
                 scope.valueSize = 0;
-            } else if (scope.config.ShowValue !== scope.config.ShowLabel) {
-                scope.valueSize = originalValueSize * 0.5;
+            } else if (labelCount === 1) {
+                scope.valueSize = originalValueSize / 3;
+            } else if (labelCount === 2) {
+                scope.valueSize = originalValueSize * 2 / 3;
             } else {
                 scope.valueSize = originalValueSize;
             }
@@ -204,8 +213,8 @@ window.PIVisualization = window.PIVisualization || {};
 
                 // Determine padding to either side of scale by getting longer of first and last label, at least 3 characters
                 var padding = scaleLabels.length > 0
-                        ? Math.max(Math.max(scaleLabels[0].length, scaleLabels[scaleLabels.length - 1].length), 3) * fontMetrics.charWidth
-                        : 0;
+                    ? Math.max(Math.max(scaleLabels[0].length, scaleLabels[scaleLabels.length - 1].length), 3) * fontMetrics.charWidth
+                    : 0;
                 var scaleWidth = scope.position.width - padding;
                 var scaleLeft = padding / 2;
                 var halfStrokeWidth = scope.config.StrokeWidth / 2;
@@ -252,11 +261,39 @@ window.PIVisualization = window.PIVisualization || {};
                     width: round(scaleWidth),
                     height: scope.availableGaugeHeight - scaleHeight - scope.config.StrokeWidth
                 };
-            }
+            }//end !indicator only part
+
+            scope.goodRangeRectangle = {
+                x: scope.outerRectangle.x,
+                y: scope.outerRectangle.y,
+                height: round(scope.outerRectangle.height),
+                width: round(scope.outerRectangle.width * scope.config.GoodRange / 100)
+            };
+
+            scope.warningRangeRectangle = {
+                x: scope.outerRectangle.x,
+                y: scope.outerRectangle.y,
+                height: round(scope.outerRectangle.height),
+                width: round(scope.outerRectangle.width * scope.config.WarningRange / 100)
+            };
+
+            scope.badRangeRectangle = {
+                x: scope.outerRectangle.x,
+                y: scope.outerRectangle.y,
+                height: round(scope.outerRectangle.height),
+                width: round(scope.outerRectangle.width * scope.config.BadRange / 100)
+            };
+
+            scope.comparisonRectangle = {
+                x: round(scope.outerRectangle.width * scope.config.ComparisonValue / 100 -5),
+                y: (scope.outerRectangle.y + scope.outerRectangle.height) / 4,
+                height: round(scope.outerRectangle.height * .5),
+                width: 5
+            };
 
             scope.indicatorRectangle = {
-                y: scope.outerRectangle.y,
-                height: round(scope.outerRectangle.height)
+                y: (scope.outerRectangle.y + scope.outerRectangle.height) / 3,
+                height: round(scope.outerRectangle.height / 3)
             };
 
             if (isInverted()) {
@@ -266,7 +303,7 @@ window.PIVisualization = window.PIVisualization || {};
                 scope.indicatorRectangle.x = scope.outerRectangle.x;
                 scope.indicatorRectangle.width = round(scope.outerRectangle.width * indicatorValue / 100);
             }
-        }
+        }//end update Horizontal
 
         function isInverted() {
             var settings = scope.config.ValueScaleSettings;
@@ -278,7 +315,7 @@ window.PIVisualization = window.PIVisualization || {};
     [{
         typeName: 'bulletgraphvert',
         displayName: "Bullet Graph Vertical",
-        iconUrl: 'Scripts/app/editor/symbols/ext/bulletgraph.png',
+        iconUrl: 'Scripts/app/editor/symbols/ext/bulletgraph-vert.png',
         getDefaultConfig: function () {
             return PV.SymValueLabelOptions.getDefaultConfig({
                 DataShape: 'Gauge',
@@ -288,7 +325,13 @@ window.PIVisualization = window.PIVisualization || {};
                 Background: 'rgba(255,255,255,0)',
                 Stroke: 'white',
                 StrokeWidth: '3',
-                ValueStroke: 'white'
+                ValueStroke: 'white',
+                ShowComparisonLabel: true,
+                ShowComparisonValue: true,
+                ComparisonValue: 90,
+                GoodRange:70,
+                WarningRange:40,
+                BadRange:20
             });
         },
         symbolFamily: 'gauge',
@@ -306,7 +349,13 @@ window.PIVisualization = window.PIVisualization || {};
                 Background: 'rgba(255,255,255,0)',
                 Stroke: 'white',
                 StrokeWidth: '3',
-                ValueStroke: 'white'
+                ValueStroke: 'white',
+                ShowComparisonLabel: true,
+                ShowComparisonValue: true,
+                ComparisonValue: 90,
+                GoodRange:70,
+                WarningRange:40,
+                BadRange:20
             });
         },
         symbolFamily: 'gauge',
@@ -333,7 +382,7 @@ window.PIVisualization = window.PIVisualization || {};
         def.configTemplateUrl = 'scripts/app/editor/symbols/ext/sym-bulletgraph-config.html';
         def.configTitle = PV.ResourceStrings.FormatGaugeOption;
         def.configInit = PV.GaugeConfig.init;
-        def.configChangeScaleSettings = PV.GaugeConfig.changeScaleSettings;        
+        def.configChangeScaleSettings = PV.GaugeConfig.changeScaleSettings;
 
         PV.symbolCatalog.register(def);
     });

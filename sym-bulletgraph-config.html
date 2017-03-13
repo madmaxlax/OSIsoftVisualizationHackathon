@@ -1,3 +1,31 @@
+<!--Bullet graph options-->
+<div class="c-side-pane t-toolbar">
+    <span class="config-section-header">Bullet Graph Options</span>
+</div>
+
+<div class="config-option-format">
+
+    <label class="flex-align-center">
+        <input type="checkbox" class="c-config-checkbox"
+               ng-model="config.ShowComparisonValue">Show Comparison Value?<br />
+    </label>
+    <div ng-show="config.ShowComparisonValue">
+        Comparison Value <input type="number" ng-model="config.ComparisonValue">%
+        
+    <!--<pv-color-picker id="ComparisonValueFill" ng-model="config.ComparisonValueColor"></pv-color-picker>-->
+    </div>
+    <br>
+    <br>
+        Good range value <input type="number" ng-model="config.GoodRange" max="100" min="0">%
+    <br>
+    <br>
+        Warning range value <input type="number" ng-model="config.WarningRange" max="100" min="0">%
+    <br>
+    <br>
+        Bad range value <input type="number" ng-model="config.BadRange" max="100" min="0">%
+</div>
+
+<!--Rest of bar graph options-->
 <div class="c-side-pane t-toolbar">
     <span class="config-section-header">{{::res.LinearGaugeConfigBarFill}}</span>
 </div>
@@ -22,10 +50,9 @@
 
 <div class="config-option-single-row config-option-slider" id="weight">
     <div class="config-label">{{::res.WeightKeyword}}</div>
-        <input type="range" ng-model="config.StrokeWidth" min="2" max="12"
-               class="config-option-range"
-               title="{{config.StrokeWidth}}" />
-    </div>
+    <input type="range" ng-model="config.StrokeWidth" min="2" max="12" class="config-option-range" title="{{config.StrokeWidth}}"
+    />
+</div>
 <br />
 
 <div class="c-side-pane t-toolbar">
@@ -36,7 +63,7 @@
 </div>
 
 <div class="c-side-pane t-toolbar">
-    <span class="config-section-header">{{::res.ValueConfigTextVisibility}}</span>
+    <span class="config-section-header">Label {{::res.ValueConfigTextVisibility}}</span>
 </div>
 <div class="c-config-content-vertical">
     <label class="flex-align-center">
@@ -56,6 +83,11 @@
         <input type="checkbox" class="c-config-checkbox"
                ng-model="config.ShowUOM">{{::res.ValueConfigUom}}<br />
     </label>
+
+    <label class="flex-align-center" style="margin-top: 8px">
+        <input type="checkbox" class="c-config-checkbox"
+               ng-model="config.ShowComparison">Show Comparison Value<br />
+    </label>
 </div>
 
 <div ng-if="runtimeData.metaData">
@@ -69,12 +101,16 @@
                    ng-checked="!config.ValueScaleSettings">{{::res.LinearGaugeConfigScaleUseDefaults}}<br />
         </label>
         <div ng-if="config.ValueScaleSettings !== undefined && def.typeName === 'verticalgauge'">
-            <pv-scale-limit-input label="{{::res.LinearGaugeConfigScaleTop}}" limit="MaxValue" config="config" runtime-data="runtimeData" update="update()" />
-            <pv-scale-limit-input label="{{::res.LinearGaugeConfigScaleBottom}}" limit="MinValue" config="config" runtime-data="runtimeData" update="update()" />
+            <pv-scale-limit-input label="{{::res.LinearGaugeConfigScaleTop}}" limit="MaxValue" config="config" runtime-data="runtimeData"
+                update="update()" />
+            <pv-scale-limit-input label="{{::res.LinearGaugeConfigScaleBottom}}" limit="MinValue" config="config" runtime-data="runtimeData"
+                update="update()" />
         </div>
         <div ng-if="config.ValueScaleSettings !== undefined && def.typeName === 'horizontalgauge'">
-            <pv-scale-limit-input label="{{::res.LinearGaugeConfigScaleLeft}}" limit="MinValue" config="config" runtime-data="runtimeData" update="update()" />
-            <pv-scale-limit-input label="{{::res.LinearGaugeConfigScaleRight}}" limit="MaxValue" config="config" runtime-data="runtimeData" update="update()" />
+            <pv-scale-limit-input label="{{::res.LinearGaugeConfigScaleLeft}}" limit="MinValue" config="config" runtime-data="runtimeData"
+                update="update()" />
+            <pv-scale-limit-input label="{{::res.LinearGaugeConfigScaleRight}}" limit="MaxValue" config="config" runtime-data="runtimeData"
+                update="update()" />
         </div>
     </div>
 </div>
